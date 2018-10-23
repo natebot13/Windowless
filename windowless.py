@@ -1,41 +1,37 @@
-import pyglet, math
-from screeninfo import get_monitors
+import pyglet, math, json
 from random import randint
 from pyglet.window import key, mouse
 from pyglet.gl import *
 
-"""
-    Notes:
-        * Window Location measured form top left of screen to top left of window
-            * same for platforms and player
-        * Rendering form bottom left of window
-"""
-
 
 class Platform:
 
-    def __init__(self, x1, x2, y, h):
+    def __init__(self, x1, x2, y, h, color=(0, 0, 0, 255)):
         self.x1 = x1
         self.x2 = x2
         self.y = y
         self.h = h
+        self.c = color
 
-    def update(self, x1, x2, y, h):
-        self.__init__(x1, x2, y, h)
+    def update(self, x1, x2, y, h, color=(0, 0, 0, 255)):
+        self.__init__(x1, x2, y, h, color)
 
 
 class Deer:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.grounded = False
         self.xSpeed = 0
         self.ySpeed = 0
         self.frame = 10
+        self.jumpStrenth = 11
         self.seq = pyglet.image.ImageGrid(pyglet.resource.image('deer.png'), 5, 5)
         self.sprite = pyglet.sprite.Sprite(img=self.seq[self.frame])
 
     def jump(self):
-        self.ySpeed = -7
+        if self.grounded:
+            self.ySpeed -= self.jumpStrenth
 
     def update(self):
         if abs(self.xSpeed) + abs(self.ySpeed) < .1:
@@ -43,20 +39,36 @@ class Deer:
         else:
             self.frame = 10 if self.frame >= 14 else self.frame + .05 + math.sqrt(abs(self.xSpeed / 50))
         self.sprite.image = self.seq[round(self.frame)]
-        self.x, self.y = self.x + self.xSpeed, self.y + self.ySpeed
-        self.xSpeed, self.ySpeed = self.xSpeed / 1.1, self.ySpeed + .2 / 1.1
+        self.xSpeed, self.ySpeed = self.xSpeed / 1.04, (self.ySpeed + .4) / 1.04
+        self.grounded = False
         for p in platforms: #+ window_platforms:
-            if self.ySpeed > 0 and p.x1 - deer.sprite.width/2 < self.x < p.x2 + deer.sprite.width/2 and p.y + p.h > self.y >= p.y:
-                self.ySpeed = 0
-                self.y = p.y
+            if p.x1 - self.sprite.width/2 < self.x + self.xSpeed < p.x2 + self.sprite.width/2 and p.y + p.h + self.sprite.height > self.y + self.ySpeed > p.y:
+                if not p.x1 - self.sprite.width/2 < self.x < p.x2 + self.sprite.width/2:
+                    if self.xSpeed > 0:
+                        self.xSpeed = p.x1 - self.sprite.width/2 - self.x
+                    else:
+                        self.xSpeed = p.x2 + self.sprite.width/2 - self.x
+                if not p.y + p.h + self.sprite.height > self.y > p.y:
+                    if self.ySpeed < 0:
+                        self.ySpeed = p.y + p.h + self.sprite.height - self.y
+                    else:
+                        self.grounded = True
+                        self.ySpeed = p.y - self.y
+        self.x, self.y = self.x + self.xSpeed, self.y + self.ySpeed
         if keys[key.A]:
             self.sprite.scale_x = -1
-            self.xSpeed -= 1
+            self.xSpeed -= .8
         elif keys[key.D]:
             self.sprite.scale_x = 1
-            self.xSpeed += 1
-        if res[0] + offset[0] < self.x < offset[0] and res[1] + offset[1] < self.y < offset[1]:
-            scroll()
+            self.xSpeed += .8
+        if res[0] + offset[0] < self.x:
+            offset[0] += res[0]
+        if self.x < offset[0]:
+            offset[0] -= res[0]
+        if res[1] + offset[1] < self.y:
+            offset[1] += res[1]
+        if self.y < offset[1]:
+            offset[1] -= res[1]
 
 
 deer = Deer(10, 0)
@@ -73,25 +85,28 @@ for m in pyglet.window.get_platform().get_default_display().get_screens():
         res[1] = m.height + abs(m.y)
 offset = [0, 0]
 move = [0, 0]
-platforms = [Platform(100, 200, 200, 200)]
+platforms = []
 #window_platforms = []
 mouseLoc = [0, 0]
 moving = False
-label1 = pyglet.text.Label('Window1', font_name='Times New Roman', font_size=36, x=windows[0].width//2, y=windows[0].height//2
-                           , anchor_x='center', anchor_y='center')
-label2 = pyglet.text.Label('Window2', font_name='Times New Roman', font_size=36, x=windows[1].width//2, y=windows[1].height//2
-                           , anchor_x='center', anchor_y='center')
 
-def scroll():
-    offset = [0, 0]
+
+def read_map(map='map'):
+    with open(map, 'r') as map:
+        map = json.loads(map.read())
+        for p in map['Platforms']:
+            platforms.append(Platform(p['x1'], p['x2'], p['y'], p['h'], tuple(p['color'])))
+
+
+read_map()
 
 
 def x_to_window(x, w):
-    return x - w.get_location()[0]
+    return x - w.get_location()[0] - offset[0]
 
 
 def y_to_window(y, w):
-    return w.get_size()[1] + w.get_location()[1] - y
+    return w.get_size()[1] + w.get_location()[1] - y + offset[1]
 
 
 def points_to_window(p, w):
@@ -99,11 +114,11 @@ def points_to_window(p, w):
 
 
 def x_from_window(x, w):
-    return x + w.get_location()[0]
+    return x + w.get_location()[0] + offset[0]
 
 
 def y_from_window(y, w):
-    return w.get_size()[1] - y + w.get_location()[1]
+    return -w.get_size()[1] - w.get_location()[1] + y - offset[1]
 
 
 def points_from_window(p, w):
@@ -130,19 +145,25 @@ def on_draw(w, i):
     def helper():
         w.clear()
         glEnable(GL_BLEND)
-        label1.draw()
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         if not i:
-            deer.sprite.position = [w.width/2 + deer.sprite.width * -.5 * deer.sprite.scale_x, w.height/2]
-            w.set_location(int(deer.x-w.width/2), int(deer.y-w.height/2))
-        else:
-            deer.sprite.position = [x_to_window(deer.x, w) + deer.sprite.width * -.5 * deer.sprite.scale_x - offset[0], y_to_window(deer.y, w) - offset[1]]
-        BG.blit(x_to_window(0, w) - offset[0], y_to_window(res[1], w) - offset[1])
+            x, y = int(deer.x-offset[0]-w.width/2), int(deer.y-offset[1]-w.height/2)
+            if w.width / 2 > deer.x - offset[0]:
+                x = 0
+            if deer.x - offset[0] > res[0] - (w.width / 2):
+                x = res[0] - w.width
+            if w.height / 2 > deer.y - offset[1]:
+                y = 0
+            if deer.y - offset[1] > res[1] - (w.height / 2):
+                y = res[1] - w.height
+            w.set_location(x, y)
+        deer.sprite.position = [x_to_window(deer.x, w) + deer.sprite.width * -.5 * deer.sprite.scale_x, y_to_window(deer.y, w)]
+        BG.blit(x_to_window(0, w), y_to_window(res[1], w))
         deer.sprite.draw()
         for p in platforms:
             pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
                                          ('v2i', points_to_window([p.x1, p.y + p.h, p.x1, p.y, p.x2, p.y, p.x2, p.y + p.h], w)),
-                                         ('c3B', (0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255 )))
+                                         ('c4B', (p.c * 4)))
     return helper
 
 
@@ -158,6 +179,8 @@ def on_key_press(w, i):
 def on_mouse_drag(w, i):
     def helper(x, y, dx, dy, buttons, modifiers):
         global moving, mouseLoc
+        if not i:
+            return
         if not moving:
             moving = True
             mouseLoc = x, y
@@ -188,6 +211,7 @@ def update(dt):
     for w in windows:
         w.push_handlers(keys)
     deer.update()
+    print(deer.y)
 
 
 #make_window_platforms()
