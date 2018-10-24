@@ -18,7 +18,7 @@ class Platform:
 
 move = [False, False, False, False]
 offset = [0, 0]
-selected = -1
+selected = None
 gridS = 100
 grid = False
 window = pyglet.window.Window(resizable=True)
@@ -110,19 +110,67 @@ def on_draw():
 
 @window.event
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
-    offset[0] -= dx
-    offset[1] += dy
+    print(selected)
+    if selected:
+        x, y = x_from_window(x), -y_from_window(y)
+        p = platforms[selected[0]]
+        if selected[1] == 0 or selected[1] == 1:
+            if p.h + p.y < y:
+                selected[1] += 2
+                p.y += p.h
+                p.h = y - p.y
+                return
+            p.y = y
+            p.h += dy
+        elif selected[1] == 2 or selected[1] == 3:
+            if p.y > y:
+                selected[1] -= 2
+                p.h = p.y - y
+                p.y = y
+                return
+            p.h = y - p.y
+        if selected[1] == 0 or selected[1] == 2:
+            if p.x2 < x:
+                selected[1] += 1
+                p.x1 = p.x2
+                p.x2 = x
+                return
+            p.x1 = x
+        elif selected[1] == 1 or selected[1] == 3:
+            if p.x1 > x:
+                selected[1] -= 1
+                p.x2 = p.x1
+                p.x1 = x
+                return
+            p.x2 = x
+    else:
+        offset[0] -= dx
+        offset[1] += dy
+
 
 
 @window.event
 def on_mouse_press(x, y, button, modifiers):
     global selected
     for i, p in enumerate(platforms):
-        if p.x1 < x_from_window(x) < p.x2 and p.y + p.h > -y_from_window(y) > p.y:
-            selected = i
+        if p.x1 - 10 < x_from_window(x) < p.x1 + 10 and p.y - 10 < -y_from_window(y) < p.y + 10:
+            selected = [i, 0]
             break
-    else:
-        selected = -1
+        elif p.x2 - 10 < x_from_window(x) < p.x2 + 10 and p.y - 10 < -y_from_window(y) < p.y + 10:
+            selected = [i, 1]
+            break
+        elif p.x1 - 10 < x_from_window(x) < p.x1 + 10 and p.y + p.h - 10 < -y_from_window(y) < p.y + p.h + 10:
+            selected = [i, 2]
+            break
+        elif p.x2 - 10 < x_from_window(x) < p.x2 + 10 and p.y + p.h - 10 < -y_from_window(y) < p.y + p.h + 10:
+            selected = [i, 3]
+            break
+
+
+@window.event
+def on_mouse_release(x, y, button, modifiers):
+    global selected
+    selected = None
 
 
 def update(dt):
@@ -135,9 +183,6 @@ def update(dt):
         offset[1] += speed
     if move[3]:
         offset[0] += speed
-    if selected > -1:
-        p = platforms[selected]
-        print(selected)
 
 
 update_map()
