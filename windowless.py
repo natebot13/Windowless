@@ -6,11 +6,11 @@ from pyglet.gl import *
 
 class Platform:
 
-    def __init__(self, x1, x2, y, h, color=(0, 0, 0, 255)):
+    def __init__(self, x1, x2, y1, y2, color=(0, 0, 0, 255)):
         self.x1 = x1
         self.x2 = x2
-        self.y = y
-        self.h = h
+        self.y1 = y1
+        self.y2 = y2
         self.c = color
 
     def update(self, x1, x2, y, h, color=(0, 0, 0, 255)):
@@ -25,7 +25,7 @@ class Deer:
         self.xSpeed = 0
         self.ySpeed = 0
         self.frame = 10
-        self.jumpStrenth = 11
+        self.jumpStrenth = 15
         self.seq = pyglet.image.ImageGrid(pyglet.resource.image('deer.png'), 5, 5)
         self.sprite = pyglet.sprite.Sprite(img=self.seq[self.frame])
 
@@ -42,18 +42,18 @@ class Deer:
         self.xSpeed, self.ySpeed = self.xSpeed / 1.04, (self.ySpeed + .4) / 1.04
         self.grounded = False
         for p in platforms: #+ window_platforms:
-            if p.x1 - self.sprite.width/2 < self.x + self.xSpeed < p.x2 + self.sprite.width/2 and p.y + p.h + self.sprite.height > self.y + self.ySpeed > p.y:
+            if p.x1 - self.sprite.width/2 < self.x + self.xSpeed < p.x2 + self.sprite.width/2 and p.y2 + self.sprite.height > self.y + self.ySpeed > p.y1:
                 if not p.x1 - self.sprite.width/2 < self.x < p.x2 + self.sprite.width/2:
                     if self.xSpeed > 0:
                         self.xSpeed = p.x1 - self.sprite.width/2 - self.x
                     else:
                         self.xSpeed = p.x2 + self.sprite.width/2 - self.x
-                if not p.y + p.h + self.sprite.height > self.y > p.y:
+                if not p.y2 + self.sprite.height > self.y > p.y1:
                     if self.ySpeed < 0:
-                        self.ySpeed = p.y + p.h + self.sprite.height - self.y
+                        self.ySpeed = p.y2 + self.sprite.height - self.y
                     else:
                         self.grounded = True
-                        self.ySpeed = p.y - self.y
+                        self.ySpeed = p.y1 - self.y
         self.x, self.y = self.x + self.xSpeed, self.y + self.ySpeed
         if keys[key.A]:
             self.sprite.scale_x = -1
@@ -95,7 +95,7 @@ def read_map(map='map'):
     with open(map, 'r') as map:
         map = json.loads(map.read())
         for p in map['Platforms']:
-            platforms.append(Platform(p['x1'], p['x2'], p['y'], p['h'], tuple(p['color'])))
+            platforms.append(Platform(p['x1'], p['x2'], p['y1'], p['y2'], tuple(p['color'])))
 
 
 read_map()
@@ -106,7 +106,7 @@ def x_to_window(x, w):
 
 
 def y_to_window(y, w):
-    return w.get_size()[1] + w.get_location()[1] - y + offset[1]
+    return w.height + w.get_location()[1] - y + offset[1]
 
 
 def points_to_window(p, w):
@@ -118,7 +118,7 @@ def x_from_window(x, w):
 
 
 def y_from_window(y, w):
-    return -w.get_size()[1] - w.get_location()[1] + y - offset[1]
+    return w.height - y + w.get_location()[1] + offset[1]
 
 
 def points_from_window(p, w):
@@ -133,7 +133,7 @@ def points_from_window(p, w):
 #         p = Platform(w.get_location()[0], w.get_location()[0] + w.width, w.get_location()[1] + w.height, 20)
 #         for o in windows:
 #             if o.get_location()[1] + o.height > w.get_location()[1] + w.height > o.get_location()[1] and o.get_location()[0] + o.height > w.get_location()[0]:
-#                 window_platforms.append(Platform(p.x1, o.get_location()[0], p.y, 20))
+#                 window_platforms.append(Platform(p.x1, o.get_location()[0], p.y1, 20))
 #                 p.x1 = o.get_location()[0] + o.width
 #                 if p.x1 > p.x2:
 #                     break
@@ -162,7 +162,7 @@ def on_draw(w, i):
         deer.sprite.draw()
         for p in platforms:
             pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
-                                         ('v2i', points_to_window([p.x1, p.y + p.h, p.x1, p.y, p.x2, p.y, p.x2, p.y + p.h], w)),
+                                         ('v2i', points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2], w)),
                                          ('c4B', (p.c * 4)))
     return helper
 
@@ -211,7 +211,6 @@ def update(dt):
     for w in windows:
         w.push_handlers(keys)
     deer.update()
-    print(deer.y)
 
 
 #make_window_platforms()
