@@ -1,7 +1,22 @@
-import pyglet, math, json
+import pyglet, math, json, esper
 from random import randint
 from pyglet.window import key, mouse
 from pyglet.gl import *
+
+
+class Window(pyglet.window.Window):
+
+    def start(self):
+        self.update()
+        return self
+
+    def update(self):
+        self.x1 = self.get_location()[0]
+        self.x2 = self.get_location()[0] + self.width
+        self.y1 = self.get_location()[1]
+        self.y2 = self.get_location()[1] + self.height
+
+
 
 
 class Platform:
@@ -25,24 +40,27 @@ class Deer:
         self.xSpeed = 0
         self.ySpeed = 0
         self.frame = 10
-        self.jumpStrenth = 15
+        self.jumpStrength = 20
+        self.id = None
         self.seq = pyglet.image.ImageGrid(pyglet.resource.image('deer.png'), 5, 5)
         self.sprite = pyglet.sprite.Sprite(img=self.seq[self.frame])
 
     def jump(self):
         if self.grounded:
-            self.ySpeed -= self.jumpStrenth
+            self.ySpeed -= self.jumpStrength
 
     def update(self):
+        windows[0].update()
         if abs(self.xSpeed) + abs(self.ySpeed) < .1:
             self.frame = 20 if self.frame >= 24 else self.frame + .3
         else:
             self.frame = 10 if self.frame >= 14 else self.frame + .05 + math.sqrt(abs(self.xSpeed / 50))
         self.sprite.image = self.seq[round(self.frame)]
-        self.xSpeed, self.ySpeed = self.xSpeed / 1.04, (self.ySpeed + .4) / 1.04
+        self.xSpeed, self.ySpeed = self.xSpeed / 1.06, (self.ySpeed + .6) / 1.06
         self.grounded = False
+        nx, ny = self.x + self.xSpeed, self.y + self.ySpeed
         for p in platforms: #+ window_platforms:
-            if p.x1 - self.sprite.width/2 < self.x + self.xSpeed < p.x2 + self.sprite.width/2 and p.y2 + self.sprite.height > self.y + self.ySpeed > p.y1:
+            if p.x1 - self.sprite.width/2 < nx < p.x2 + self.sprite.width/2 and p.y2 + self.sprite.height > ny > p.y1:
                 if not p.x1 - self.sprite.width/2 < self.x < p.x2 + self.sprite.width/2:
                     if self.xSpeed > 0:
                         self.xSpeed = p.x1 - self.sprite.width/2 - self.x
@@ -55,6 +73,14 @@ class Deer:
                         self.grounded = True
                         self.ySpeed = p.y1 - self.y
         self.x, self.y = self.x + self.xSpeed, self.y + self.ySpeed
+        if world.has_component(deer.id, AGC):
+            deer.sprite.scale_y = 1
+            world.remove_component(deer.id, AGC)
+        for i, w in enumerate(windows):
+            if not i:
+                continue
+            if w.x1 - self.sprite.width / 2 < self.x - offset[0] < w.x2 + self.sprite.width / 2 and w.y2 + self.sprite.height > self.y - offset[1] > w.y1:
+                world.add_component(self.id, AGC())
         if keys[key.A]:
             self.sprite.scale_x = -1
             self.xSpeed -= .8
@@ -71,12 +97,23 @@ class Deer:
             offset[1] -= res[1]
 
 
+class AGC:
+    pass
+
+
+class AGS(esper.Processor):
+    def process(self):
+        for ent, (deer, agc) in self.world.get_components(Deer, AGC):
+            deer.ySpeed = (deer.ySpeed * 1.06 - 1.2) / 1.06
+            deer.sprite.scale_y = -1
+
+
 deer = Deer(10, 0)
-BG = pyglet.image.load("BG.png")
+BG = pyglet.image.load("bg.png")
 keys = key.KeyStateHandler()
 windows = []
 for i in range(3):
-    windows.append(pyglet.window.Window(style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS))
+    windows.append(Window(style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS).start())
 res = [0, 0]
 for m in pyglet.window.get_platform().get_default_display().get_screens():
     if m.width + abs(m.x) > res[0]:
@@ -86,7 +123,7 @@ for m in pyglet.window.get_platform().get_default_display().get_screens():
 offset = [0, 0]
 move = [0, 0]
 platforms = []
-#window_platforms = []
+# window_platforms = []
 mouseLoc = [0, 0]
 moving = False
 
@@ -102,11 +139,11 @@ read_map()
 
 
 def x_to_window(x, w):
-    return x - w.get_location()[0] - offset[0]
+    return x - w.x1 - offset[0]
 
 
 def y_to_window(y, w):
-    return w.height + w.get_location()[1] - y + offset[1]
+    return w.y2 - y + offset[1]
 
 
 def points_to_window(p, w):
@@ -114,11 +151,11 @@ def points_to_window(p, w):
 
 
 def x_from_window(x, w):
-    return x + w.get_location()[0] + offset[0]
+    return x + w.x1 + offset[0]
 
 
 def y_from_window(y, w):
-    return w.height - y + w.get_location()[1] + offset[1]
+    return w.y2 - y + + offset[1]
 
 
 def points_from_window(p, w):
@@ -157,13 +194,13 @@ def on_draw(w, i):
             if deer.y - offset[1] > res[1] - (w.height / 2):
                 y = res[1] - w.height
             w.set_location(x, y)
-        deer.sprite.position = [x_to_window(deer.x, w) + deer.sprite.width * -.5 * deer.sprite.scale_x, y_to_window(deer.y, w)]
+        deer.sprite.position = [x_to_window(deer.x, w) + deer.sprite.width * -.5 * deer.sprite.scale_x, y_to_window(deer.y + deer.sprite.height * (deer.sprite.scale_y * .5 - .5), w)]
         BG.blit(x_to_window(0, w), y_to_window(res[1], w))
         deer.sprite.draw()
         for p in platforms:
-            pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
-                                         ('v2i', points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2], w)),
-                                         ('c4B', (p.c * 4)))
+           pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
+                                        ('v2i', points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2], w)),
+                                        ('c4B', (p.c * 4)))
     return helper
 
 
@@ -172,7 +209,8 @@ def on_key_press(w, i):
         if symbol == key.W or symbol == key.SPACE:
             deer.jump()
         if symbol == key.ESCAPE:
-            w.close()
+            for win in windows:
+                win.close()
     return helper
 
 
@@ -187,9 +225,9 @@ def on_mouse_drag(w, i):
         if buttons & mouse.LEFT:
             x, y = x - mouseLoc[0], y - mouseLoc[1]
             if x + y != 0:
-                xs, ys = w.get_location()
-                w.set_location(xs + x, ys - y)
-                #make_window_platforms()
+                w.update()
+                w.set_location(w.x1 + x, w.y1 - y)
+                # make_window_platforms()
     return helper
 
 
@@ -210,10 +248,15 @@ for i, w in enumerate(windows):
 def update(dt):
     for w in windows:
         w.push_handlers(keys)
-    deer.update()
+    if not moving:
+        deer.update()
+    world.process()
 
 
-#make_window_platforms()
+world = esper.World()
+deer.id = world.create_entity(deer)
+world.add_processor(AGS())
+# make_window_platforms()
 pyglet.clock.schedule_interval(update, 1/60.0)
 
 pyglet.app.run()

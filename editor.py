@@ -17,6 +17,7 @@ class Platform:
 
 
 move = [False, False, False, False]
+tolerance = 20
 offset = [0, 0]
 selected = None
 gridS = 100
@@ -68,7 +69,7 @@ def x_from_window(x):
 
 
 def y_from_window(y):
-    return round((window.height / 2 - y) // zoom + window.height / 2+ window.get_location()[1] + offset[1])
+    return round((window.height / 2 - y) // zoom + window.height / 2 + window.get_location()[1] + offset[1])
 
 
 def points_from_window(p):
@@ -185,25 +186,24 @@ def on_mouse_press(x, y, button, modifiers):
         selected = [0, 0, 0]
         d = False
         x, y = x_from_window(x), y_from_window(y)
-        print(x, y)
         for i, p in enumerate(platforms):
-            if p.x1 - 20 < x < p.x1 + 20 and p.y1 < y < p.y2:
+            if p.x1 - tolerance / zoom < x < p.x1 + tolerance / zoom and p.y1 < y < p.y2:
                 selected[1] = -1
                 window.set_mouse_cursor(window.get_system_mouse_cursor('size_left'))
                 d = True
-            elif p.x2 - 20 < x < p.x2 + 20 and p.y1 < y < p.y2:
+            elif p.x2 - tolerance / zoom < x < p.x2 + tolerance / zoom and p.y1 < y < p.y2:
                 selected[1] = 1
                 window.set_mouse_cursor(window.get_system_mouse_cursor('size_right'))
                 d = True
-            if p.y1 - 20 < y < p.y1 + 20 and p.x1 < x < p.x2:
+            if p.y1 - tolerance / zoom < y < p.y1 + tolerance / zoom and p.x1 < x < p.x2:
                 selected[2] = -1
                 window.set_mouse_cursor(window.get_system_mouse_cursor('size_down'))
                 d = True
-            elif p.y2 - 20 < y < p.y2 + 20 and p.x1 < x < p.x2:
+            elif p.y2 - tolerance / zoom < y < p.y2 + tolerance / zoom and p.x1 < x < p.x2:
                 selected[2] = 1
                 window.set_mouse_cursor(window.get_system_mouse_cursor('size_up'))
                 d = True
-            if p.x1 + 20 < x < p.x2 - 20 and p.y1 + 20 < y < p.y2 - 20:
+            if p.x1 + tolerance / zoom < x < p.x2 - tolerance / zoom and p.y1 + tolerance / zoom < y < p.y2 - tolerance / zoom:
                 selected = [i]
                 window.set_mouse_cursor(window.get_system_mouse_cursor('hand'))
                 return
