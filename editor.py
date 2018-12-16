@@ -36,17 +36,19 @@ for m in pyglet.window.get_platform().get_default_display().get_screens():
 
 def update_map(map='map'):
     with open(map, 'w') as map:
-        Platforms = {'Platforms': []}
+        Platforms = {'Platforms': [], 'Windows': windows}
         for p in reversed(platforms):
             Platforms['Platforms'].append({'x1': p.x1, 'x2': p.x2, 'y1': p.y1, 'y2': p.y2, 'color': p.c})
         json.dump(Platforms, map)
 
 
 def read_map(map='map'):
+    global windows
     with open(map, 'r') as map:
         map = json.loads(map.read())
         for p in map['Platforms']:
             platforms.append(Platform(p['x1'], p['x2'], p['y1'], p['y2'], tuple(p['color'])))
+        windows = map['Windows']
 
 
 read_map()
