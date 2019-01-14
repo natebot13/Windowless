@@ -1,19 +1,29 @@
 import json, pyglet
 from window import Window
 from collision import Platform
+from trigger import Trigger
 
-def read_map(game, m:str='map'):
+
+def read_map(game, m: str='map'):
     with open(m, 'r') as m:
         m = json.loads(m.read())
-        game.platforms.clear()
-        for p in m['Platforms']:
-            game.platforms.append(Platform(p['x1'], p['x2'], p['y1'], p['y2'], tuple(p['color'])))
-        for w in game.windows:
-            w.close()
-        game.windows.clear()
-        for i, w in enumerate(m['Windows']):
-            w = Window(i+1, w['effect'], w['function'], game, style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS, width=w['width'], height=w['height'])
-            game.windows.append(w)
+        if 'Platforms' in m:
+            game.platforms.clear()
+            for t in m['Platforms']:
+                game.platforms.append(Platform(t['x1'], t['x2'], t['y1'], t['y2']))
+        if 'Triggers' in m:
+            game.triggers.clear()
+            for t in m['Triggers']:
+                game.triggers.append(Trigger(t['x1'], t['x2'], t['y1'], t['y2'],
+                                             t['enter'], t['stay'], t['leave'], t['args']))
+        if 'Windows' in m:
+            for w in game.windows:
+                w.close()
+            game.windows.clear()
+            for i, w in enumerate(m['Windows']):
+                w = Window(i+1, w['effect'], w['function'], game, style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS,
+                           width=w['width'], height=w['height'])
+                game.windows.append(w)
 
 
 def x_to_window(x: int, w: Window, offset):

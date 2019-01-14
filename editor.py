@@ -1,19 +1,17 @@
 import pyglet, math, json
+from collision import Platform
 from pyglet.window import key, mouse
 from pyglet.gl import *
 
 
-class Platform:
-
-    def __init__(self, x1, x2, y1, y2, color=(50, 50, 50, 255)):
-        self.x1 = x1
-        self.x2 = x2
-        self.y1 = y1
-        self.y2 = y2
-        self.c = color
-
-    def update(self, x1, x2, y1, y2, color=(50, 50, 50, 255)):
-        self.__init__(x1, x2, y1, y2, color)
+class Trigger(Platform):
+    def __init__(self, x1: float, x2: float, y1: float, y2: float, enter: str, stay: str, leave: str, args: tuple):
+        super().__init__(x1, x2, y1, y2)
+        self.active = False
+        self.enter = enter
+        self.stay = stay
+        self.leave = leave
+        self.args = args
 
 
 move = [False, False, False, False]
@@ -24,6 +22,7 @@ gridS = 100
 grid = True
 window = pyglet.window.Window(resizable=True)
 platforms = []
+triggers = []
 res = [0, 0]
 zoom = 1
 scroll_speed = 5
@@ -36,9 +35,13 @@ for m in pyglet.window.get_platform().get_default_display().get_screens():
 
 def update_map(map='map'):
     with open(map, 'w') as map:
-        Platforms = {'Platforms': [], 'Windows': windows}
+        Platforms = {'Platforms': [], 'Triggers': [], 'Windows': windows}
         for p in reversed(platforms):
-            Platforms['Platforms'].append({'x1': p.x1, 'x2': p.x2, 'y1': p.y1, 'y2': p.y2, 'color': p.c})
+            if type(p) is Platform:
+                Platforms['Platforms'].append({'x1': p.x1, 'x2': p.x2, 'y1': p.y1, 'y2': p.y2})
+            elif type(p) is Trigger:
+                Platforms['Triggers'].append({'x1': p.x1, 'x2': p.x2, 'y1': p.y1, 'y2': p.y2,
+                                               'enter': p.enter, 'stay': p.stay, 'leave': p.leave, 'args': p.args})
         json.dump(Platforms, map)
 
 
@@ -47,7 +50,9 @@ def read_map(map='map'):
     with open(map, 'r') as map:
         map = json.loads(map.read())
         for p in map['Platforms']:
-            platforms.append(Platform(p['x1'], p['x2'], p['y1'], p['y2'], tuple(p['color'])))
+            platforms.append(Platform(p['x1'], p['x2'], p['y1'], p['y2']))
+        for t in map['Triggers']:
+            platforms.append(Trigger(t['x1'], t['x2'], t['y1'], t['y2'], t['enter'], t['stay'], t['leave'], t['args']))
         windows = map['Windows']
 
 
@@ -102,9 +107,15 @@ def on_draw():
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         for p in platforms:
-            pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
-                                         ('v2i', points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2])),
-                                         ('c4B', (p.c * 4)))
+            if type(p) is Platform:
+                pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
+                                             ('v2i', points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2])),
+                                             ('c4B', ((100, 100, 100, 255) * 4)))
+            elif type(p) is Trigger:
+                pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
+                                             ('v2i', points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2])),
+                                             ('c4B', ((0, 255, 255, 255) * 4)))
+
         if grid:
             y1, y2 = offset[1] + window.get_location()[1] - window.height / 2 // zoom, offset[1] + window.get_location()[1] + window.height / 2 // zoom + window.height
             x1, x2 = offset[0] + window.get_location()[0] - window.width / 2 // zoom, offset[0] + window.get_location()[0] + window.width / 2 // zoom + window.width
@@ -224,10 +235,14 @@ def on_mouse_press(x, y, button, modifiers):
             selected = None
     elif button == pyglet.window.mouse.MIDDLE:
         for i, p in enumerate(platforms):
-            if p.x1 < x_from_window(x) < p.x2 and p.y1 < y_from_window(y) < p.y2:
+            if p.collide(x_from_window(x), y_from_window(y), 0, 0):
                 platforms.pop(i)
     elif button == pyglet.window.mouse.RIGHT:
-        platforms.append(Platform(x_from_window(x), x_from_window(x), y_from_window(y), y_from_window(y)))
+        if modifiers == pyglet.window.key.MOD_CTRL:
+            platforms.append(Trigger(x_from_window(x), x_from_window(x), y_from_window(y), y_from_window(y),
+                                     'none', 'none', 'none', ({}, {}, {}, {})))
+        else:
+            platforms.append(Platform(x_from_window(x), x_from_window(x), y_from_window(y), y_from_window(y)))
         selected = [len(platforms) - 1, 1, 1]
 
 
@@ -242,8 +257,6 @@ def on_mouse_release(x, y, button, modifiers):
 def on_mouse_scroll(x, y, scroll_x, scroll_y):
     global zoom
     zoom += scroll_y * zoom * .1
-
-
 
 
 def update(dt):

@@ -1,11 +1,10 @@
 class Platform:
 
-    def __init__(self, x1: float, x2: float, y1: float, y2: float, color: tuple=(0, 0, 0, 255)):
+    def __init__(self, x1: float, x2: float, y1: float, y2: float):
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
         self.y2 = y2
-        self.c = color
 
     def collide_x(self, x: float, width: float):
         return self.x1 - width < x < self.x2
