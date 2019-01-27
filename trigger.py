@@ -19,7 +19,6 @@ def trigger_check(game):
             if trigger.active:
                 trigger.stay(trigger, trigger.args[1], trigger.args[3], game)
             else:
-                print("mmm", trigger.enter)
                 trigger.enter(trigger, trigger.args[0], trigger.args[3], game)
             trigger.active = True
         elif trigger.active:
@@ -28,16 +27,14 @@ def trigger_check(game):
 
 
 def open_window(trigger: Trigger, p, g, game):
-    print(game.windows)
     if g['window'] == -1:
         game.windows.append(Window(len(game.windows), None, None, game,
                                    style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS,
-                                   x=p['x'], y=p['y'], width=p['width'], height=p['height']))
+                                   x=p['x']-game.offset[0], y=p['y']-game.offset[1], width=p['width'], height=p['height']))
         g['window'] = len(game.windows) - 1
 
 
 def close_window(trigger: Trigger, p, g, game):
-    print(game.windows)
     if not g['window'] == -1:
         game.windows.sort(key=lambda val: val.id)
         game.windows[g['window']].close()
@@ -48,7 +45,8 @@ def close_window(trigger: Trigger, p, g, game):
 triggers = {
     'none': lambda trigger, p, g, game: None,
     'win open': open_window,
-    'win close': close_window
+    'win close': close_window,
+    'ech': lambda trigger, p, g, game: print(game.windows)
 }
 
 

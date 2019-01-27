@@ -9,6 +9,7 @@ class Window(pyglet.window.Window):
     def __init__(self, id: int, effect, fcn: Union[str, None], game, *args, x=0, y=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.game = game
+        self.set_location(x, y)
         self.x1 = self.get_location()[0]
         self.x2 = self.get_location()[0] + self.width
         self.y1 = self.get_location()[1]
@@ -16,8 +17,7 @@ class Window(pyglet.window.Window):
         self.id = id
         self.effect = effect
         self.moving = False
-        self.fcn = movements[fcn] if fcn else movements['follows']
-        self.update((x, y))
+        self.fcn = movements[fcn] if fcn else movements['none']
         self.set_location(x, y)
 
     def update(self, l: tuple):
@@ -49,7 +49,7 @@ class Window(pyglet.window.Window):
         self.game.deer.sprite.draw()
         for p in self.game.platforms:
             pyglet.graphics.draw_indexed(4, pyglet.gl.GL_TRIANGLES, [0, 1, 2, 0, 2, 3],
-                                         ('v2i', util.points_to_window([p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2],
+                                         ('v2i', util.points_to_window((p.x1, p.y2, p.x1, p.y1, p.x2, p.y1, p.x2, p.y2),
                                                                        self, self.game.offset)),
                                          ('c4B', ((100, 100, 100, 255) * 4)))
 
@@ -64,10 +64,13 @@ class Window(pyglet.window.Window):
 
     def on_mouse_release(self, x, y, button, modifiers): self.moving = False
 
+    def __repr__(self):
+        return '%s(width=%d, height=%d, loc=%s)' % \
+            (self.__class__.__name__, self.width, self.height, self.get_location())
 
 def follow(w, game):
     x, y = int(game.deer.x - game.offset[0] - (w.width-game.deer.sprite.width)/2),\
-           int(game.deer.y - game.offset[1] - w.height/2)
+           int(game.deer.y - game.offset[1] - w.height/2) + 200
     if w.width / 2 > game.deer.x - game.offset[0]:
         x = 0
     if game.deer.x - game.offset[0] > game.res[0] - (w.width / 2):
@@ -80,9 +83,9 @@ def follow(w, game):
 
 
 movements = {
+    'none': lambda x, y, w, game: w.get_location(),
     'follows': lambda x, y, w, game: follow(w, game),
     'drag': lambda x, y, w, game: (x+game.offset[0], y+game.offset[1]) if w.moving else False,
     'half circle': lambda x, y, w, game: (math.sin((abs(game.time*100 % 360-180)-90)*math.pi/180)*200+4640-game.offset[0],
-                                          math.cos((abs(game.time*100 % 360-180)-90)*math.pi/180)*200+400-game.offset[1]),
-    'still': lambda x, y, w, game: (x-game.offset[0], y-game.offset[1])
+                                          math.cos((abs(game.time*100 % 360-180)-90)*math.pi/180)*200+400-game.offset[1])
 }

@@ -13,14 +13,14 @@ class Deer:
         self.drag = 1.06
         self.gravity = 1500.0
         self.speed = 1500.0
-        self.jumpStrength = 100000.0
+        self.jumpStrength = 1500.0
         self.id = None
         self.seq = pyglet.image.ImageGrid(pyglet.resource.image('deer.png'), 5, 5)
         self.sprite = pyglet.sprite.Sprite(img=self.seq[self.frame])
 
     def jump(self, dt):
         if self.grounded:
-            self.ySpeed -= self.jumpStrength * dt
+            self.ySpeed -= self.jumpStrength
 
     def collision_check(self, game):
         self.xSpeed, self.ySpeed = self.xSpeed * game.dt, self.ySpeed * game.dt
