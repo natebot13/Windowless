@@ -4,25 +4,35 @@ from collision import Platform
 from trigger import Trigger
 
 
+def x_to_pixels(game, *x):
+    return [round(game.res[0] * i) for i in x]
+
+
+def y_to_pixels(game, *y):
+    return [round(game.res[1] * i) for i in y]
+
+
 def read_map(game, m: str='map'):
     with open(m, 'r') as m:
         m = json.loads(m.read())
         if 'Platforms' in m:
             game.platforms.clear()
-            for t in m['Platforms']:
-                game.platforms.append(Platform(t['x1'], t['x2'], t['y1'], t['y2']))
+            for p in m['Platforms']:
+                game.platforms.append(Platform(*x_to_pixels(game, p['x1'], p['x2']),
+                                               *y_to_pixels(game, p['y1'], p['y2'])))
         if 'Triggers' in m:
             game.triggers.clear()
             for t in m['Triggers']:
-                game.triggers.append(Trigger(t['x1'], t['x2'], t['y1'], t['y2'],
-                                             t['enter'], t['stay'], t['leave'], t['args']))
+                game.triggers.append(Trigger(*x_to_pixels(game, t['x1'], t['x2']),
+                                      *y_to_pixels(game, t['y1'], t['y2']),
+                                      t['enter'], t['stay'], t['leave'], t['args']))
         if 'Windows' in m:
             for w in game.windows:
                 w.close()
             game.windows.clear()
             for i, w in enumerate(m['Windows']):
                 w = Window(i+1, w['effect'], w['function'], game, style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS,
-                           width=w['width'], height=w['height'])
+                           width=x_to_pixels(game, w['width'])[0], height=y_to_pixels(game, w['height'])[0])
                 game.windows.append(w)
 
 

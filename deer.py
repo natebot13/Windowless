@@ -6,7 +6,7 @@ class Deer:
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
-        self.grounded = False
+        self.grounded = 0
         self.xSpeed = 0.0
         self.ySpeed = 0.0
         self.frame = 10
@@ -19,8 +19,9 @@ class Deer:
         self.sprite = pyglet.sprite.Sprite(img=self.seq[self.frame])
 
     def jump(self, dt):
-        if self.grounded:
+        if self.grounded > 0:
             self.ySpeed -= self.jumpStrength
+            self.grounded = 0
 
     def collision_check(self, game):
         self.xSpeed, self.ySpeed = self.xSpeed * game.dt, self.ySpeed * game.dt
@@ -35,7 +36,7 @@ class Deer:
                     if self.ySpeed < 0:
                         self.ySpeed = p.y2 + self.sprite.height - self.y
                     else:
-                        self.grounded = True
+                        self.grounded = .08
                         self.ySpeed = p.y1 - self.y
         self.xSpeed, self.ySpeed = self.xSpeed / game.dt, self.ySpeed / game.dt
 
@@ -75,7 +76,8 @@ class Deer:
         self.sprite.image = self.seq[round(self.frame)]
         self.xSpeed, self.ySpeed = self.xSpeed / self.drag, \
                                    (self.ySpeed + self.gravity * game.dt) / self.drag
-        self.grounded = False
+        self.grounded -= game.dt
+        print(self.grounded)
         self.collision_check(game)
         self.x, self.y = self.x + self.xSpeed * game.dt, self.y + self.ySpeed * game.dt
         self.window_check(game)

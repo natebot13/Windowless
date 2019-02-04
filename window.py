@@ -5,7 +5,6 @@ from pyglet.gl import *
 
 
 class Window(pyglet.window.Window):
-
     def __init__(self, id: int, effect, fcn: Union[str, None], game, *args, x=0, y=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.game = game
@@ -17,8 +16,8 @@ class Window(pyglet.window.Window):
         self.id = id
         self.effect = effect
         self.moving = False
+        self.on_close = lambda: None
         self.fcn = movements[fcn] if fcn else movements['none']
-        self.set_location(x, y)
 
     def update(self, l: tuple):
         self.move(l[0], l[1])
@@ -68,9 +67,10 @@ class Window(pyglet.window.Window):
         return '%s(width=%d, height=%d, loc=%s)' % \
             (self.__class__.__name__, self.width, self.height, self.get_location())
 
+
 def follow(w, game):
     x, y = int(game.deer.x - game.offset[0] - (w.width-game.deer.sprite.width)/2),\
-           int(game.deer.y - game.offset[1] - w.height/2) + 200
+           int(game.deer.y - game.offset[1] - w.height/2)
     if w.width / 2 > game.deer.x - game.offset[0]:
         x = 0
     if game.deer.x - game.offset[0] > game.res[0] - (w.width / 2):

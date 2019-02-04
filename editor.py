@@ -23,14 +23,8 @@ grid = True
 window = pyglet.window.Window(resizable=True)
 platforms = []
 triggers = []
-res = [0, 0]
 zoom = 1
 scroll_speed = 5
-for m in pyglet.window.get_platform().get_default_display().get_screens():
-    if m.width + abs(m.x) > res[0]:
-        res[0] = m.width + abs(m.x)
-    if m.height + abs(m.y) > res[1]:
-        res[1] = m.height + abs(m.y)
 
 
 def update_map(map='map'):
@@ -38,9 +32,9 @@ def update_map(map='map'):
         Platforms = {'Platforms': [], 'Triggers': [], 'Windows': windows}
         for p in reversed(platforms):
             if type(p) is Platform:
-                Platforms['Platforms'].append({'x1': p.x1, 'x2': p.x2, 'y1': p.y1, 'y2': p.y2})
+                Platforms['Platforms'].append({'x1': p.x1/1920, 'x2': p.x2/1920, 'y1': p.y1/1080, 'y2': p.y2/1080})
             elif type(p) is Trigger:
-                Platforms['Triggers'].append({'x1': p.x1, 'x2': p.x2, 'y1': p.y1, 'y2': p.y2,
+                Platforms['Triggers'].append({'x1': p.x1/1920, 'x2': p.x2/1920, 'y1': p.y1/1080, 'y2': p.y2/1080,
                                                'enter': p.enter, 'stay': p.stay, 'leave': p.leave, 'args': p.args})
         json.dump(Platforms, map)
 
@@ -50,9 +44,10 @@ def read_map(map='map'):
     with open(map, 'r') as map:
         map = json.loads(map.read())
         for p in map['Platforms']:
-            platforms.append(Platform(p['x1'], p['x2'], p['y1'], p['y2']))
+            platforms.append(Platform(round(p['x1']*1920), round(p['x2']*1920), round(p['y1']*1080), round(p['y2']*1080)))
         for t in map['Triggers']:
-            platforms.append(Trigger(t['x1'], t['x2'], t['y1'], t['y2'], t['enter'], t['stay'], t['leave'], t['args']))
+            platforms.append(Trigger(round(t['x1']*1920), round(t['x2']*1920), round(t['y1']*1080), round(t['y2']*1080),
+                                     t['enter'], t['stay'], t['leave'], t['args']))
         windows = map['Windows']
 
 

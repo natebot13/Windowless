@@ -16,7 +16,12 @@ class Game:
         self.triggers = []
         self.offset = [0, 0]
         self.move = [0, 0]
-        self.res = [0, 0]
+        self.res = [pyglet.window.get_platform().get_default_display().get_default_screen().width,
+                    pyglet.window.get_platform().get_default_display().get_default_screen().height]
+        if self.res[0] / self.res[1] > 16 / 9:
+            self.res[0] = self.res[1] * 16 / 9
+        elif self.res[0] / self.res[1] < 16 / 9:
+            self.res[1] = self.res[0] * 9 / 16
         self.mouseLoc = [0, 0]
         for m in pyglet.window.get_platform().get_default_display().get_screens():
             if m.width + abs(m.x) > self.res[0]:
