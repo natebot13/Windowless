@@ -39,10 +39,12 @@ class Window(pyglet.window.Window):
         self.clear()
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        self.game.deer.sprite.position = [util.x_to_window(self.game.deer.x,
-                                                           self, self.game.offset) - self.game.deer.sprite.width * (self.game.deer.sprite.scale_x-1)/2,
-                                          util.y_to_window(self.game.deer.y + self.game.deer.sprite.height * (self.game.deer.sprite.scale_y * .5 - .5),
-                                                           self, self.game.offset)]
+        self.game.deer.sprite.position = [util.x_to_window(self.game.deer.x, self, self.game.offset)
+                                          - self.game.deer.sprite.width
+                                          * (self.game.deer.sprite.scale_x-1)/2,
+                                          util.y_to_window(self.game.deer.y + self.game.deer.sprite.height
+                                                           * (self.game.deer.sprite.scale_y * .5 - .5)
+                                                           , self, self.game.offset)]
         self.game.BG.blit(util.x_to_window(0, self, self.game.offset),
                           util.y_to_window(self.game.res[1], self, self.game.offset))
         self.game.deer.sprite.draw()

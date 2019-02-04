@@ -8,7 +8,6 @@ from pyglet.window import key, mouse
 
 class Game:
     def __init__(self):
-        self.deer = Deer(3000, 0)
         self.BG = pyglet.image.load('bg.png')
         self.time = 0
         self.dt = 0
@@ -19,15 +18,11 @@ class Game:
         self.res = [pyglet.window.get_platform().get_default_display().get_default_screen().width,
                     pyglet.window.get_platform().get_default_display().get_default_screen().height]
         if self.res[0] / self.res[1] > 16 / 9:
-            self.res[0] = self.res[1] * 16 / 9
+            self.res[0] = round(self.res[1] * 16 / 9)
         elif self.res[0] / self.res[1] < 16 / 9:
-            self.res[1] = self.res[0] * 9 / 16
+            self.res[1] = round(self.res[0] * 9 / 16)
         self.mouseLoc = [0, 0]
-        for m in pyglet.window.get_platform().get_default_display().get_screens():
-            if m.width + abs(m.x) > self.res[0]:
-                self.res[0] = m.width + abs(m.x)
-            if m.height + abs(m.y) > self.res[1]:
-                self.res[1] = m.height + abs(m.y)
+        self.deer = Deer(self, 1.5, 0)
         self.windows = [Window(0, None, None, self, style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS)]
         self.keys = key.KeyStateHandler()
         self.world = esper.World()

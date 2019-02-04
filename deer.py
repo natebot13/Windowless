@@ -1,11 +1,12 @@
 import pyglet, math, esper
 from pyglet.window import key
+from util import x_to_pixels, y_to_pixels
 
 
 class Deer:
-    def __init__(self, x: float, y: float):
-        self.x = x
-        self.y = y
+    def __init__(self, game, x: float, y: float):
+        self.x = x_to_pixels(game, x)[0]
+        self.y = y_to_pixels(game, y)[0]
         self.grounded = 0
         self.xSpeed = 0.0
         self.ySpeed = 0.0
@@ -77,7 +78,6 @@ class Deer:
         self.xSpeed, self.ySpeed = self.xSpeed / self.drag, \
                                    (self.ySpeed + self.gravity * game.dt) / self.drag
         self.grounded -= game.dt
-        print(self.grounded)
         self.collision_check(game)
         self.x, self.y = self.x + self.xSpeed * game.dt, self.y + self.ySpeed * game.dt
         self.window_check(game)
