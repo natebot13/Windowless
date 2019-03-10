@@ -1,5 +1,5 @@
-import esper, util, pyglet, trigger
-from deer import Deer, effects, processors
+import util, pyglet, trigger
+from deer import Deer
 from window import Window
 from trigger import Trigger
 from collision import Platform
@@ -22,27 +22,23 @@ class Game:
         elif self.res[0] / self.res[1] < 16 / 9:
             self.res[1] = round(self.res[0] * 9 / 16)
         self.mouseLoc = [0, 0]
-        self.deer = Deer(self, 1.5, 0)
-        self.windows = [Window(0, None, None, self, style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS)]
+        self.objects = [Deer(self, 1.5, 0)]
+        self.deer = self.objects[0]
+        self.windows = {}
         self.keys = key.KeyStateHandler()
-        self.world = esper.World()
-        self.deer.id = self.world.create_entity(self.deer)
         util.read_map(self)
-        for processor in processors:
-            self.world.add_processor(processor())
         pyglet.clock.schedule_interval(self.update, 1 / 60.0)
+
+    def close(self):
+        for w in self.windows.values():
+            w.close()
 
     def update(self, dt):
         if dt > .1:
             return
         self.time += dt
         self.dt = dt
-        for w in self.windows:
-            w.update(util.points_from_window((w._mouse_x - self.mouseLoc[0] - self.offset[0],
-                                              w._mouse_y - self.mouseLoc[1] - self.offset[1]), w, self.offset))
-            w.push_handlers(self.keys)
-        self.world.process(dt)
-        self.deer.update(game)
+        self.deer.update()
         trigger.trigger_check(game)
 
 

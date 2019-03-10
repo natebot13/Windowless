@@ -5,13 +5,12 @@ from pyglet.gl import *
 
 
 class Trigger(Platform):
-    def __init__(self, x1: float, x2: float, y1: float, y2: float, enter: str, stay: str, leave: str, args: tuple):
+    def __init__(self, x1: float, x2: float, y1: float, y2: float, enter: str, stay: str, leave: str):
         super().__init__(x1, x2, y1, y2)
         self.active = False
         self.enter = enter
         self.stay = stay
         self.leave = leave
-        self.args = args
 
 
 move = [False, False, False, False]
@@ -35,7 +34,7 @@ def update_map(map='map'):
                 Platforms['Platforms'].append({'x1': p.x1/1920, 'x2': p.x2/1920, 'y1': p.y1/1080, 'y2': p.y2/1080})
             elif type(p) is Trigger:
                 Platforms['Triggers'].append({'x1': p.x1/1920, 'x2': p.x2/1920, 'y1': p.y1/1080, 'y2': p.y2/1080,
-                                               'enter': p.enter, 'stay': p.stay, 'leave': p.leave, 'args': p.args})
+                                              'enter': p.enter, 'stay': p.stay, 'leave': p.leave})
         json.dump(Platforms, map)
 
 
@@ -47,7 +46,7 @@ def read_map(map='map'):
             platforms.append(Platform(round(p['x1']*1920), round(p['x2']*1920), round(p['y1']*1080), round(p['y2']*1080)))
         for t in map['Triggers']:
             platforms.append(Trigger(round(t['x1']*1920), round(t['x2']*1920), round(t['y1']*1080), round(t['y2']*1080),
-                                     t['enter'], t['stay'], t['leave'], t['args']))
+                                     t['enter'], t['stay'], t['leave']))
         windows = map['Windows']
 
 
@@ -80,8 +79,12 @@ def points_from_window(p):
 
 @window.event
 def on_key_press(symbol, modifiers):
-    if symbol == key.S and modifiers == pyglet.window.key.MOD_CTRL:
-        update_map()
+    if symbol == key.S and modifiers & pyglet.window.key.MOD_ACCEL:
+        try:
+            update_map()
+            print("Successfully Saved")
+        except:
+            print("Error Saving")
 
 
 @window.event
@@ -144,7 +147,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
                 p.x2 = x
                 return
             p.x1 = x
-            if modifiers == pyglet.window.key.MOD_SHIFT:
+            if modifiers & pyglet.window.key.MOD_SHIFT:
                 p.x1 = round(p.x1 / gridS) * gridS
         elif selected[1] == 1:
             if p.x1 > x:
@@ -153,7 +156,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
                 p.x1 = x
                 return
             p.x2 = x
-            if modifiers == pyglet.window.key.MOD_SHIFT:
+            if modifiers & pyglet.window.key.MOD_SHIFT:
                 p.x2 = round(p.x2 / gridS) * gridS
         if selected[2] == -1:
             if p.y2 < y:
@@ -162,7 +165,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
                 p.y2 = y
                 return
             p.y1 = y
-            if modifiers == pyglet.window.key.MOD_SHIFT:
+            if modifiers & pyglet.window.key.MOD_SHIFT:
                 p.y1 = round(p.y1 / gridS) * gridS
         elif selected[2] == 1:
             if p.y1 > y:
@@ -171,7 +174,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
                 p.y1 = y
                 return
             p.y2 = y
-            if modifiers == pyglet.window.key.MOD_SHIFT:
+            if modifiers & pyglet.window.key.MOD_SHIFT:
                 p.y2 = round(p.y2 / gridS) * gridS
         if selected[1] == -1 and selected[2] == -1:
             window.set_mouse_cursor(window.get_system_mouse_cursor('size_up_left'))
@@ -233,7 +236,7 @@ def on_mouse_press(x, y, button, modifiers):
             if p.collide(x_from_window(x), y_from_window(y), 0, 0):
                 platforms.pop(i)
     elif button == pyglet.window.mouse.RIGHT:
-        if modifiers == pyglet.window.key.MOD_CTRL:
+        if modifiers & pyglet.window.key.MOD_CTRL:
             platforms.append(Trigger(x_from_window(x), x_from_window(x), y_from_window(y), y_from_window(y),
                                      'none', 'none', 'none', ({}, {}, {}, {})))
         else:

@@ -5,11 +5,11 @@ from trigger import Trigger
 
 
 def x_to_pixels(game, *x):
-    return [round(game.res[0] * i) for i in x]
+    return [round(game.res[0] * i) for i in x] if len(x) > 1 else round(game.res[0] * x[0])
 
 
 def y_to_pixels(game, *y):
-    return [round(game.res[1] * i) for i in y]
+    return [round(game.res[1] * i) for i in y] if len(y) > 1 else round(game.res[1] * y[0])
 
 
 def read_map(game, m: str='map'):
@@ -25,15 +25,17 @@ def read_map(game, m: str='map'):
             for t in m['Triggers']:
                 game.triggers.append(Trigger(*x_to_pixels(game, t['x1'], t['x2']),
                                       *y_to_pixels(game, t['y1'], t['y2']),
-                                      t['enter'], t['stay'], t['leave'], t['args']))
+                                      t['enter'], t['stay'], t['leave']))
         if 'Windows' in m:
-            for w in game.windows:
+            for w in game.windows.values():
                 w.close()
-            game.windows.clear()
-            for i, w in enumerate(m['Windows']):
-                w = Window(i+1, w['effect'], w['function'], game, style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS,
-                           width=x_to_pixels(game, w['width'])[0], height=y_to_pixels(game, w['height'])[0])
-                game.windows.append(w)
+            game.windows = {}
+            for w in m['Windows']:
+                win = Window(w['name'], w['effect'], w['function'], game,
+                             style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS,
+                             width=x_to_pixels(game, w['width']), height=y_to_pixels(game, w['height']),
+                             visible=w['visible'])
+                game.windows[w['name']] = win
 
 
 def x_to_window(x: int, w: Window, offset):
