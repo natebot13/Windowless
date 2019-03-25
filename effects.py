@@ -1,24 +1,29 @@
-def DPS(game, obj, apply: bool):
+def DummyPlugSystem(game, obj, state:str):
     pass
 
-def AGS(game, obj, apply: bool):
-    if apply:
+def AntiGravity(game, obj, state:str):
+    if state == "enter":
         obj.gravity = -obj.gravity
         obj.sprite.scale_y = -obj.sprite.scale_y
-    else:
+    elif state == "stay":
+        pass
+    elif state == "leave":
         obj.gravity = -obj.gravity
         obj.sprite.scale_y = -obj.sprite.scale_y
 
 
-def WS(game, obj, apply: bool):
-        if apply:
-            obj.drag = obj.drag + 1
-        else:
-            obj.drag = obj.drag - 1
+def Wind(game, obj, state: str, x:int=0, y:int=0):
+    if state == "enter":
+        pass
+    elif state == "stay":
+        obj.xSpeed += x
+        obj.ySpeed -= y
+    elif state == "leave":
+        pass
 
 
 effects = {
-    'none': (DPS, (255, 0, 0, 20)),
-    'AGC': (AGS, (0, 255, 0, 20)),
-    'WC': (WS, (0, 0, 255, 20))
+    'None': (DummyPlugSystem, (255, 0, 0, 20)),
+    'Anti gravity': (AntiGravity, (0, 255, 0, 20)),
+    'Wind Left': (Wind, (0, 0, 255, 20)),
 }

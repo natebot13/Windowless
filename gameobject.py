@@ -5,6 +5,7 @@ class GameObject:
         self.game = game
         self.x = x_to_pixels(game, x)
         self.y = y_to_pixels(game, y)
+        self.dead = False
         self.grounded = 0
         self.xSpeed = 0.0
         self.ySpeed = 0.0
@@ -36,5 +37,8 @@ class GameObject:
         self.collision_check(self.game)
         self.x, self.y = self.x + self.xSpeed * self.game.dt, self.y + self.ySpeed * self.game.dt
         self.grounded -= self.game.dt
+
+    def kill(self):
+        self.dead = True
 
 

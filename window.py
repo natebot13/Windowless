@@ -18,12 +18,14 @@ class Window(pyglet.window.Window):
         self.y1 = self.get_location()[1]
         self.y2 = self.get_location()[1] + self.height
         self.name = name
-        self.effect, self.color = effects[effect]
+        self.color = effects[effect[0]][1]
+        self.effect = lambda game, obj, state: effects[effect[0]][0](game, obj, state, **effect[1])
         self.trigger = Trigger(self.x1, self.x2, self.y1, self.y2,
-                               enter=('effect', {'effect': self.effect, 'apply': True}),
-                               leave=('effect', {'effect': self.effect, 'apply': False}))
+                               enter=('effect', {'effect': self.effect, 'state': 'enter'}),
+                               stay=('effect', {'effect': self.effect, 'state': 'stay'}),
+                               leave=('effect', {'effect': self.effect, 'state': 'leave'}))
 
-        if effect != 'none': self.game.triggers.append(self.trigger)
+        if effect != 'None': self.game.triggers.append(self.trigger)
         self.moving = False
         self.on_close = lambda: None
         self.fcn = lambda game: movements[fcn[0]](game, **fcn[1]) if fcn[0] else movements['static'](game)
@@ -32,8 +34,11 @@ class Window(pyglet.window.Window):
         self.push_handlers(self.game.keys)
         self.move()
         self.x1, self.x2 = self.get_location()[0], self.get_location()[0] + self.width
-        self.y1, self.y2 = self.get_location()[1],self.get_location()[1] + self.height
-        self.trigger.x1, self.trigger.x2, self.trigger.y1, self.trigger.y2 = self.x1, self.x2, self.y1, self.y2
+        self.y1, self.y2 = self.get_location()[1], self.get_location()[1] + self.height
+        self.trigger.x1, self.trigger.x2, self.trigger.y1, self.trigger.y2 = self.x1 + self.game.offset[0], \
+                                                                             self.x2 + self.game.offset[0], \
+                                                                             self.y1 + self.game.offset[1], \
+                                                                             self.y2 + self.game.offset[1]
 
     def move(self):
         loc = self.fcn(self.game)

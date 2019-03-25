@@ -67,11 +67,40 @@
           "window":"viewer"
         }
       ]
+    },
+    {
+      "x1":2.1875,
+      "x2":2.7083333333333335,
+      "y1":0.9259259259259259,
+      "y2":1.1111111111111112,
+      "enter":[
+        "deathzone",
+        {
+
+        }
+      ],
+      "stay":[
+        "none",
+        {
+
+        }
+      ],
+      "leave":[
+        "none",
+        {
+
+        }
+      ]
     }
   ],
   "Windows":[
     {
-      "effect":"none",
+      "effect":[
+        "None",
+        {
+
+        }
+      ],
       "function":[
         "follows",
         {
@@ -84,7 +113,13 @@
       "visible":true
     },
     {
-      "effect":"AGC",
+      "effect":[
+        "Wind Left",
+        {
+          "x":-90,
+          "y":100
+        }
+      ],
       "function":[
         "half circle",
         {
@@ -100,7 +135,12 @@
       "visible":true
     },
     {
-      "effect":"none",
+      "effect":[
+        "None",
+        {
+
+        }
+      ],
       "function":[
         "static",
         {
@@ -113,5 +153,15 @@
       "name":"viewer",
       "visible":false
     }
+  ],
+  "Start":[
+    0,
+    0
+  ],
+  "Objects":[
+
+  ],
+  "Backgrounds":[
+
   ]
 }

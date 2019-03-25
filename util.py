@@ -15,6 +15,8 @@ def y_to_pixels(game, *y):
 def read_map(game, m: str='map'):
     with open(m, 'r') as m:
         m = json.loads(m.read())
+        if 'Start' in m:
+            game.start = m['Start']
         if 'Platforms' in m:
             game.platforms.clear()
             for p in m['Platforms']:

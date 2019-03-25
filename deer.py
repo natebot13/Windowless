@@ -40,3 +40,6 @@ class Deer(GameObject):
         self.sprite.image = self.seq[round(self.frame)]
         self.scroll_check()
 
+    def kill(self):
+        self.x, self.y = self.game.start
+

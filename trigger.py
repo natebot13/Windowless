@@ -11,6 +11,9 @@ class Trigger(Platform):
         self.stay = lambda game, obj: triggers[stay[0]](game, obj, **stay[1])
         self.leave = lambda game, obj: triggers[leave[0]](game, obj, **leave[1])
 
+    def get_location(self):
+        return self.x1, self.y1
+
 
 def trigger_check(game):
     for obj in game.objects:
@@ -41,7 +44,8 @@ def close_window(game, obj, window: str = 'main'):
 
 triggers = {
     'none': lambda game, obj: None,
-    'effect': lambda game, obj, effect, apply: (effect(game, obj, apply), print(apply)),
+    'effect': lambda game, obj, effect, state: (effect(game, obj, state)),
+    "deathzone": lambda game, obj: obj.kill(),
     'win open': open_window,
     'win close': close_window,
 }
